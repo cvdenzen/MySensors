@@ -87,44 +87,49 @@ void GPIOClass::pinMode(uint8_t pin, uint8_t mode)
 			}
 		}
 	}
+}
 
-	void GPIOClass::digitalWrite(uint8_t pin, uint8_t value) {
-		// Already defined?
-		if (gpiod_lines[pin] == NULL) {
-			gpiod_lines[pin] = gpiod_chip_get_line(chip, pin);
-			pinMode(pin,OUTPUT);
-		}
-		if (gpiod_line_set_value(gpiod_lines[pin],value) != 0) {
-			logError("Failure setting pin %d to value %d",pin,value);
-			exit(1);
+void GPIOClass::digitalWrite(uint8_t pin, uint8_t value)
+{
+	// Already defined?
+	if (gpiod_lines[pin] == NULL) {
+		gpiod_lines[pin] = gpiod_chip_get_line(chip, pin);
+		pinMode(pin,OUTPUT);
+	}
+	if (gpiod_line_set_value(gpiod_lines[pin],value) != 0) {
+		logError("Failure setting pin %d to value %d",pin,value);
+		exit(1);
+	}
+}
+
+uint8_t GPIOClass::digitalRead(uint8_t pin)
+{
+	// Already defined?
+	if (gpiod_lines[pin] == NULL) {
+		gpiod_lines[pin] = gpiod_chip_get_line(chip, pin);
+		pinMode(pin,INPUT);
+	}
+	uint8_t value;
+	value = gpiod_line_get_value(gpiod_lines[pin]);
+	if (value < 0) {
+		logError("Failure getting value from pin %d",pin);
+		exit(1);
+	}
+}
+
+uint8_t GPIOClass::digitalPinToInterrupt(uint8_t pin)
+{
+	return pin;
+}
+
+GPIOClass& GPIOClass::operator=(const GPIOClass& other)
+{
+	if (this != &other) {
+		chip = other.chip;
+		gpiod_lines = new struct gpiod_line* gpiod_lines[GPIOD_MAX_LINE_DEFINITIONS];
+		for (int i = 0; i < GPIOD_MAX_LINE_DEFINITIONS ; ++i) {
+			gpiod_lines[i] = other.gpiod_lines[i];
 		}
 	}
-
-	uint8_t GPIOClass::digitalRead(uint8_t pin) {
-		// Already defined?
-		if (gpiod_lines[pin] == NULL) {
-			gpiod_lines[pin] = gpiod_chip_get_line(chip, pin);
-			pinMode(pin,INPUT);
-		}
-		uint8_t value;
-		value = gpiod_line_get_value(gpiod_lines[pin]);
-		if (value < 0) {
-			logError("Failure getting value from pin %d",pin);
-			exit(1);
-		}
-	}
-
-	uint8_t GPIOClass::digitalPinToInterrupt(uint8_t pin) {
-		return pin;
-	}
-
-	GPIOClass& GPIOClass::operator=(const GPIOClass& other) {
-		if (this != &other) {
-			chip = other.chip;
-			gpiod_lines = new struct gpiod_line* gpiod_lines[GPIOD_MAX_LINE_DEFINITIONS];
-			for (int i = 0; i < GPIOD_MAX_LINE_DEFINITIONS ; ++i) {
-				gpiod_lines[i] = other.gpiod_lines[i];
-			}
-		}
-		return *this;
-	}
+	return *this;
+}
