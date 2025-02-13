@@ -71,7 +71,7 @@ void GPIOClass::pinMode(uint8_t pin, uint8_t mode)
 	if (gpiod_lines[pin] == NULL) {
 		gpiod_lines[pin] = gpiod_chip_get_line(chip, pin);
 	}
-	if (mode = OUTPUT) {
+	if (mode == OUTPUT) {
 		if (gpiod_line_request_output(gpiod_lines[pin],"mysgw",0) != 0) {
 			logError("Failure gpiod_line_reques_output for pin %d",pin);
 			exit(1);
