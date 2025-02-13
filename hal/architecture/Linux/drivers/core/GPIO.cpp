@@ -121,8 +121,8 @@ GPIOClass& GPIOClass::operator=(const GPIOClass& other)
 {
 	if (this != &other) {
 		chip = other.chip;
-		struct gpiod_line* a[GPIOD_MAX_LINE_DEFINITIONS];
-		gpiod_lines = a;
+		struct gpiod_line* gpiod_lines[GPIOD_MAX_LINE_DEFINITIONS];
+		// gpiod_lines = a;
 		for (int i = 0; i < GPIOD_MAX_LINE_DEFINITIONS ; ++i) {
 			gpiod_lines[i] = other.gpiod_lines[i];
 		}
