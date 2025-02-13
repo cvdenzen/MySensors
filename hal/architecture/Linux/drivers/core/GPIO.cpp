@@ -34,7 +34,7 @@ GPIOClass::GPIOClass()
 {
 
 	struct gpiod_line* gpiod_lines[GPIOD_MAX_LINE_DEFINITIONS];
-	const char *chipdevname = "/dev/gpiochip0";
+	// const char *chipdevname ;
 	// struct gpiod_chip *chip;
 	// Open GPIO chip
 	chip = gpiod_chip_open(chipdevname);
@@ -66,17 +66,13 @@ void GPIOClass::pinMode(uint8_t pin, uint8_t mode)
 		logError("GPIOClass::pinMode pin number too big: %d >= %d",pin,GPIOD_MAX_LINE_DEFINITIONS);
 		return;
 	}
-	if (pin <0) {
-		logError("GPIOClass::pinMode pin number <0: %d",pin);
-		return;
-	}
 
 	// Already defined?
 	if (gpiod_lines[pin] == NULL) {
 		gpiod_lines[pin] = gpiod_chip_get_line(chip, pin);
 	}
 	if (mode = OUTPUT) {
-		if (gpiod_line_request_output(gpiod_lines[pin],"mysgw") != 0) {
+		if (gpiod_line_request_output(gpiod_lines[pin],"mysgw",0) != 0) {
 			logError("Failure gpiod_line_reques_output for pin %d",pin);
 			exit(1);
 		} else {
@@ -110,7 +106,7 @@ uint8_t GPIOClass::digitalRead(uint8_t pin)
 	}
 	uint8_t value;
 	value = gpiod_line_get_value(gpiod_lines[pin]);
-	if (value < 0) {
+	if (value > 1) {
 		logError("Failure getting value from pin %d",pin);
 		exit(1);
 	}
@@ -125,7 +121,7 @@ GPIOClass& GPIOClass::operator=(const GPIOClass& other)
 {
 	if (this != &other) {
 		chip = other.chip;
-		gpiod_lines = new struct gpiod_line* gpiod_lines[GPIOD_MAX_LINE_DEFINITIONS];
+		gpiod_lines = new struct gpiod_line* [GPIOD_MAX_LINE_DEFINITIONS];
 		for (int i = 0; i < GPIOD_MAX_LINE_DEFINITIONS ; ++i) {
 			gpiod_lines[i] = other.gpiod_lines[i];
 		}

@@ -83,7 +83,7 @@ public:
 	GPIOClass& operator=(const GPIOClass& other);
 
 private:
-	const char chipdevname;
+	const char chipdevname= "/dev/gpiochip0";
 	struct gpiod_line* gpiod_lines[GPIOD_MAX_LINE_DEFINITIONS];
 	struct gpiod_chip *chip;
 };
