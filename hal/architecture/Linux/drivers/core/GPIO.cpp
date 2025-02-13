@@ -27,7 +27,6 @@
 #include <gpiod.h>
 #include "log.h"
 
-#define GPIOD_MAX_LINE_DEFINITIONS 64
 // Declare a single default instance
 GPIOClass GPIO = GPIOClass();
 
@@ -36,14 +35,14 @@ GPIOClass::GPIOClass()
 
 	struct gpiod_line* gpiod_lines[GPIOD_MAX_LINE_DEFINITIONS];
 	const char *chipdevname = "/dev/gpiochip0";
-	struct gpiod_chip *chip;
+	// struct gpiod_chip *chip;
 	// Open GPIO chip
 	chip = gpiod_chip_open(chipdevname);
 	if (chip == NULL) {
 		logError("Failed to open chip %s\n",chipdevname);
 	}
 
-	for (int i=0; i<GPIOD_MAX_LINE_DEFINITIONS) {
+	for (int i=0; i<GPIOD_MAX_LINE_DEFINITIONS; i++) {
 		gpiod_lines[i] = NULL;
 	}
 
