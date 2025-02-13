@@ -33,7 +33,7 @@ GPIOClass GPIO = GPIOClass();
 GPIOClass::GPIOClass()
 {
 
-	struct gpiod_line* gpiod_lines[GPIOD_MAX_LINE_DEFINITIONS];
+	// struct gpiod_line* gpiod_lines[GPIOD_MAX_LINE_DEFINITIONS];
 	// const char *chipdevname ;
 	// struct gpiod_chip *chip;
 	// Open GPIO chip
@@ -121,7 +121,8 @@ GPIOClass& GPIOClass::operator=(const GPIOClass& other)
 {
 	if (this != &other) {
 		chip = other.chip;
-		gpiod_lines = new struct gpiod_line* [GPIOD_MAX_LINE_DEFINITIONS];
+		struct gpiod_line* a[GPIOD_MAX_LINE_DEFINITIONS];
+		gpiod_lines = a;
 		for (int i = 0; i < GPIOD_MAX_LINE_DEFINITIONS ; ++i) {
 			gpiod_lines[i] = other.gpiod_lines[i];
 		}
