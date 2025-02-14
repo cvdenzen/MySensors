@@ -110,6 +110,7 @@ uint8_t GPIOClass::digitalRead(uint8_t pin)
 		logError("Failure getting value from pin %d",pin);
 		exit(1);
 	}
+	return value;
 }
 
 uint8_t GPIOClass::digitalPinToInterrupt(uint8_t pin)
@@ -121,8 +122,6 @@ GPIOClass& GPIOClass::operator=(const GPIOClass& other)
 {
 	if (this != &other) {
 		chip = other.chip;
-		struct gpiod_line* gpiod_lines[GPIOD_MAX_LINE_DEFINITIONS];
-		// gpiod_lines = a;
 		for (int i = 0; i < GPIOD_MAX_LINE_DEFINITIONS ; ++i) {
 			gpiod_lines[i] = other.gpiod_lines[i];
 		}
