@@ -153,7 +153,7 @@ void attachInterrupt(uint8_t gpioPin, void (*func)(), uint8_t mode)
 	struct gpiod_line_event event;
 	struct gpiod_line *line;
 
-	line = gpiod_chip_get_line(GPIO->chip, line_num);
+	line = gpiod_chip_get_line(GPIO.chip, line_num);
 	if (!line) {
 		logError("Get line failed\n");
 		exit(1);
