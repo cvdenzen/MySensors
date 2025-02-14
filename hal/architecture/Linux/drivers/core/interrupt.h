@@ -24,6 +24,7 @@
 
 #include <stdint.h>
 #include <gpiod.h>
+#include "GPIO.h"
 
 #define CHANGE 1
 #define FALLING 2
