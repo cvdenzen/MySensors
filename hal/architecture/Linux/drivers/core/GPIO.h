@@ -85,6 +85,7 @@ public:
 private:
 	const char* chipdevname= "/dev/gpiochip0";
 	struct gpiod_line* gpiod_lines[GPIOD_MAX_LINE_DEFINITIONS];
+public:
 	struct gpiod_chip *chip;
 };
 
