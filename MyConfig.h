@@ -661,13 +661,13 @@
  * @def MY_DEBUG_VERBOSE_RFM69
  * @brief Define this for verbose debug prints related to the %RFM69 driver.
  */
-//#define MY_DEBUG_VERBOSE_RFM69
+#define MY_DEBUG_VERBOSE_RFM69
 
 /**
  * @def MY_DEBUG_VERBOSE_RFM69_REGISTERS
  * @brief Define this for verbose dumping of the %RFM69 registers.
  */
-//#define MY_DEBUG_VERBOSE_RFM69_REGISTERS
+#define MY_DEBUG_VERBOSE_RFM69_REGISTERS
 
 /**
  * @def MY_RFM69_NEW_DRIVER
