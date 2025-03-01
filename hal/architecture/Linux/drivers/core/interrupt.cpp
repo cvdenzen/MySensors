@@ -118,7 +118,6 @@ void *interruptHandler(void *args)
 			} else {
 				logInfo("FALLING Edge on line offset %d, name %s\n",gpiod_line_offset(line),gpiod_line_name(line));
 			}
-#endif
 		}
 #endif
 
