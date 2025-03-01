@@ -24,7 +24,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <gpiod.h>
 #include "log.h"
 
 // Declare a single default instance
@@ -32,85 +31,165 @@ GPIOClass GPIO = GPIOClass();
 
 GPIOClass::GPIOClass()
 {
+	FILE *f;
+	DIR* dp;
+	char file[64];
 
-	// struct gpiod_line* gpiod_lines[GPIOD_MAX_LINE_DEFINITIONS];
-	// const char *chipdevname ;
-	// struct gpiod_chip *chip;
-	// Open GPIO chip
-	chip = gpiod_chip_open(chipdevname);
-	if (chip == NULL) {
-		logError("Failed to open chip %s\n",chipdevname);
+	dp = opendir("/sys/class/gpio");
+	if (dp == NULL) {
+		logError("Could not open /sys/class/gpio directory");
+		exit(1);
 	}
 
-	for (int i=0; i<GPIOD_MAX_LINE_DEFINITIONS; i++) {
-		gpiod_lines[i] = NULL;
-	}
+	lastPinNum = 0;
 
+	while (true) {
+		dirent *de = readdir(dp);
+		if (de == NULL) {
+			break;
+		}
+
+		if (strncmp("gpiochip", de->d_name, 8) == 0) {
+			snprintf(file, sizeof(file), "/sys/class/gpio/%s/base", de->d_name);
+			f = fopen(file, "r");
+			int base;
+			if (fscanf(f, "%d", &base) == EOF) {
+				logError("Failed to open %s\n", file);
+				base = 0;
+			}
+			fclose(f);
+
+			snprintf(file, sizeof(file), "/sys/class/gpio/%s/ngpio", de->d_name);
+			f = fopen(file, "r");
+			int ngpio;
+			if (fscanf(f, "%d", &ngpio) == EOF) {
+				logError("Failed to open %s\n", file);
+				ngpio = 0;
+			}
+			fclose(f);
+
+			int max = ngpio + base - 1;
+			if (lastPinNum < max) {
+				lastPinNum = max;
+			}
+		}
+	}
+	closedir(dp);
+
+	exportedPins = new uint8_t[lastPinNum + 1];
+
+	for (int i = 0; i < lastPinNum + 1; ++i) {
+		exportedPins[i] = 0;
+	}
 }
 
 GPIOClass::GPIOClass(const GPIOClass& other)
 {
-	chipdevname = other.chipdevname;
-	chip = other.chip;
+	lastPinNum = other.lastPinNum;
+
+	exportedPins = new uint8_t[lastPinNum + 1];
+	for (int i = 0; i < lastPinNum + 1; ++i) {
+		exportedPins[i] = other.exportedPins[i];
+	}
 }
 
 GPIOClass::~GPIOClass()
 {
-	gpiod_chip_close(chip);
+	FILE *f;
+
+	for (int i = 0; i < lastPinNum + 1; ++i) {
+		if (exportedPins[i]) {
+			f = fopen("/sys/class/gpio/unexport", "w");
+			fprintf(f, "%d\n", i);
+			fclose(f);
+		}
+	}
+
+	delete [] exportedPins;
 }
 
 void GPIOClass::pinMode(uint8_t pin, uint8_t mode)
 {
+	FILE *f;
 
-	if (pin >= GPIOD_MAX_LINE_DEFINITIONS) {
-		logError("GPIOClass::pinMode pin number too big: %d >= %d",pin,GPIOD_MAX_LINE_DEFINITIONS);
+	if (pin > lastPinNum) {
 		return;
 	}
 
-	// Already defined?
-	if (gpiod_lines[pin] == NULL) {
-		gpiod_lines[pin] = gpiod_chip_get_line(chip, pin);
-	}
-	if (mode == OUTPUT) {
-		if (gpiod_line_request_output(gpiod_lines[pin],"mysgw",0) != 0) {
-			logError("Failure gpiod_line_reques_output for pin %d",pin);
+	f = fopen("/sys/class/gpio/export", "w");
+	fprintf(f, "%d\n", pin);
+	fclose(f);
+
+	int counter = 0;
+	char file[128];
+	sprintf(file, "/sys/class/gpio/gpio%d/direction", pin);
+
+	while ((f = fopen(file,"w")) == NULL) {
+		// Wait 10 seconds for the file to be accessible if not open on first attempt
+		sleep(1);
+		counter++;
+		if (counter > 10) {
+			logError("Could not open /sys/class/gpio/gpio%u/direction", pin);
 			exit(1);
-		} else {
-			if (gpiod_line_request_input(gpiod_lines[pin],"mysgw") != 0) {
-				logError("Failure gpiod_line_request_input for pin %d",pin);
-				exit(1);
-			}
 		}
 	}
+	if (mode == INPUT) {
+		fprintf(f, "in\n");
+	} else {
+		fprintf(f, "out\n");
+	}
+
+	exportedPins[pin] = 1;
+
+	fclose(f);
 }
 
 void GPIOClass::digitalWrite(uint8_t pin, uint8_t value)
 {
-	// Already defined?
-	if (gpiod_lines[pin] == NULL) {
-		gpiod_lines[pin] = gpiod_chip_get_line(chip, pin);
-		pinMode(pin,OUTPUT);
+	FILE *f;
+	char file[128];
+
+	if (pin > lastPinNum) {
+		return;
 	}
-	if (gpiod_line_set_value(gpiod_lines[pin],value) != 0) {
-		logError("Failure setting pin %d to value %d",pin,value);
-		exit(1);
+	if (0 == exportedPins[pin]) {
+		pinMode(pin, OUTPUT);
 	}
+
+	sprintf(file, "/sys/class/gpio/gpio%d/value", pin);
+	f = fopen(file, "w");
+
+	if (value == 0)	{
+		fprintf(f, "0\n");
+	} else {
+		fprintf(f, "1\n");
+	}
+
+	fclose(f);
 }
 
 uint8_t GPIOClass::digitalRead(uint8_t pin)
 {
-	// Already defined?
-	if (gpiod_lines[pin] == NULL) {
-		gpiod_lines[pin] = gpiod_chip_get_line(chip, pin);
-		pinMode(pin,INPUT);
+	FILE *f;
+	char file[128];
+
+	if (pin > lastPinNum) {
+		return 0;
 	}
-	uint8_t value;
-	value = gpiod_line_get_value(gpiod_lines[pin]);
-	if (value > 1) {
-		logError("Failure getting value from pin %d",pin);
-		exit(1);
+	if (0 == exportedPins[pin]) {
+		pinMode(pin, INPUT);
 	}
-	return value;
+
+	sprintf(file, "/sys/class/gpio/gpio%d/value", pin);
+	f = fopen(file, "r");
+
+	int i;
+	if (fscanf(f, "%d", &i) == EOF) {
+		logError("digitalRead: failed to read pin %u\n", pin);
+		i = 0;
+	}
+	fclose(f);
+	return i;
 }
 
 uint8_t GPIOClass::digitalPinToInterrupt(uint8_t pin)
@@ -121,9 +200,11 @@ uint8_t GPIOClass::digitalPinToInterrupt(uint8_t pin)
 GPIOClass& GPIOClass::operator=(const GPIOClass& other)
 {
 	if (this != &other) {
-		chip = other.chip;
-		for (int i = 0; i < GPIOD_MAX_LINE_DEFINITIONS ; ++i) {
-			gpiod_lines[i] = other.gpiod_lines[i];
+		lastPinNum = other.lastPinNum;
+
+		exportedPins = new uint8_t[lastPinNum + 1];
+		for (int i = 0; i < lastPinNum + 1; ++i) {
+			exportedPins[i] = other.exportedPins[i];
 		}
 	}
 	return *this;
