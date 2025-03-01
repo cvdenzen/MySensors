@@ -709,9 +709,32 @@ LOCAL uint8_t RFM69_getTxPowerPercent(void)
 LOCAL bool RFM69_sanityCheck(void)
 {
 	bool result = true; // default
-	result &= RFM69_readReg(RFM69_REG_RSSITHRESH) == RFM69_RSSITHRESH_VALUE;
-	result &= RFM69_readReg(RFM69_REG_SYNCVALUE1) == RFM69_SYNCVALUE1;
-	result &= RFM69_readReg(RFM69_REG_SYNCVALUE2) == MY_RFM69_NETWORKID;
+	uint8_t regval;
+	uint8_t expval;
+	regval = RFM69_readReg(RFM69_REG_RSSITHRESH);
+	expval = RFM69_RSSITHRESH_VALUE;
+	if (regval != expval) {
+		result = false;
+#ifdef MY_DEBUG_VERBOSE_RFM69
+		logError("RFM69_sanityCheck RFM69_REG_RSSITHRESH: expected: %d, read: %d\n",expval,regval);
+#endif
+	}
+	regval = RFM69_readReg(RFM69_REG_SYNCVALUE1);
+	expval = RFM69_SYNCVALUE1;
+	if (regval != expval) {
+		result = false;
+#ifdef MY_DEBUG_VERBOSE_RFM69
+		logError("RFM69_sanityCheck RFM69_REG_RSSITHRESH: expected: %d, read: %d\n",expval,regval);
+#endif
+	}
+	regval = RFM69_readReg(RFM69_REG_SYNCVALUE2);
+	expval = MY_RFM69_NETWORKID;
+	if (regval != expval) {
+		result = false;
+#ifdef MY_DEBUG_VERBOSE_RFM69
+		logError("RFM69_sanityCheck RFM69_REG_RSSITHRESH: expected: %d, read: %d\n",expval,regval);
+#endif
+	}
 	return result;
 }
 
