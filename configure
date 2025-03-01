@@ -248,11 +248,18 @@ function detect_machine {
         soc="AM33XX"
         ;;
     *)
-        if [[ $machine == *"ROCK Pi 4"* ]]; then
-            soc="RK3399"
-            tp="RockPi4"
-        fi
+        case $machine in
+        *"ROCK Pi 4"*)
+             soc="RK3399"
+             tp="RockPi4"
+            ;;
+        "Raspberry Pi 4"*)
+            soc="BCM2711"
+            tp="rpi4"
+            ;;
+        esac
     esac
+
     echo "${soc} ${tp} ${cpu}"
 }
 
