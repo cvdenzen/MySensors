@@ -104,23 +104,27 @@ void *interruptHandler(void *args)
 
 	while (1) {
 		// Wait for it ...
-		// New version
 		int ret = gpiod_line_event_wait(line, NULL);
 		if (ret < 0) {
 			logError("Error waiting for interrupt: %s\n", strerror(errno));
 			break;
 		}
 		struct gpiod_line_event event;
-		if (gpiod_line_event_read(line, &event) == 0) {
+		int event_read_result = gpiod_line_event_read(line, &event);
+#ifdef MY_DEBUG_VERBOSE_CORE
+		if ( event_read_result == 0) {
 			if (event.event_type == GPIOD_LINE_EVENT_RISING_EDGE) {
-				logInfo("RISING Edge\n");
+				logInfo("RISING Edge on line offset %d, name %s\n",gpiod_line_offset(line),gpiod_line_name(line));
 			} else {
-				logInfo("FALLING Edge\n");
+				logInfo("FALLING Edge on line offset %d, name %s\n",gpiod_line_offset(line),gpiod_line_name(line));
 			}
+#endif
 		}
 
 		// Call user function.
-		logError("Calling user function\n");
+#ifdef MY_DEBUG_VERBOSE_CORE
+		logInfo("Calling user function\n");
+#endif
 
 		pthread_mutex_lock(&intMutex);
 		if (interruptsEnabled) {
