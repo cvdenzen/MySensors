@@ -28,6 +28,7 @@
 #define LOW 0
 #define HIGH 1
 
+#define GPIOD_MAX_LINE_DEFINITIONS 64
 /**
  * @brief GPIO class
  */
@@ -82,8 +83,10 @@ public:
 	GPIOClass& operator=(const GPIOClass& other);
 
 private:
-	int lastPinNum; //!< @brief Highest pin number supported.
-	uint8_t *exportedPins; //!< @brief Array with information of which pins were exported.
+	const char* chipdevname= "/dev/gpiochip0";
+	struct gpiod_line* gpiod_lines[GPIOD_MAX_LINE_DEFINITIONS];
+public:
+	struct gpiod_chip *chip;
 };
 
 extern GPIOClass GPIO;
