@@ -88,7 +88,6 @@ int piHiPri(const int pri)
 void *interruptHandler(void *args)
 {
 	int fd;
-	char c;
 	struct ThreadArgs *arguments = (struct ThreadArgs *)args;
 	int gpioPin = arguments->gpioPin;
 	struct gpiod_line *line = arguments->line;
@@ -110,8 +109,8 @@ void *interruptHandler(void *args)
 			break;
 		}
 		struct gpiod_line_event event;
-		int event_read_result = gpiod_line_event_read(line, &event);
 #ifdef MY_DEBUG_VERBOSE_CORE
+		int event_read_result = gpiod_line_event_read(line, &event);
 		if ( event_read_result == 0) {
 			if (event.event_type == GPIOD_LINE_EVENT_RISING_EDGE) {
 				logInfo("RISING Edge on line offset %d, name %s\n",gpiod_line_offset(line),gpiod_line_name(line));
@@ -119,6 +118,9 @@ void *interruptHandler(void *args)
 				logInfo("FALLING Edge on line offset %d, name %s\n",gpiod_line_offset(line),gpiod_line_name(line));
 			}
 		}
+#else
+    gpiod_line_event_read(line, &event);
+    logDebug("Edge on line offset %d, name %s\n",gpiod_line_offset(line),gpiod_line_name(line));
 #endif
 
 		// Call user function.
@@ -144,11 +146,6 @@ void *interruptHandler(void *args)
 
 void attachInterrupt(uint8_t gpioPin, void (*func)(), uint8_t mode)
 {
-	FILE *fd;
-	char fName[40];
-	char c;
-	int count;
-
 	if (threadIds[gpioPin] == NULL) {
 		threadIds[gpioPin] = new pthread_t;
 	} else {
@@ -158,9 +155,8 @@ void attachInterrupt(uint8_t gpioPin, void (*func)(), uint8_t mode)
 		usleep(1000);
 	}
 
-	char *chipname = "gpiochip0";
+	const char chipname[] = "gpiochip0";
 	unsigned int line_num = gpioPin;
-	struct gpiod_line_event event;
 	struct gpiod_chip *chip;
 	struct gpiod_line *line;
 
